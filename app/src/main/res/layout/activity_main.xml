@@ -4,19 +4,40 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
     android:orientation="vertical">
 
     <TextView
+        android:padding="16dp"
+        android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@android:color/holo_red_dark"
-        android:text="Hello World!"
+        android:text="答题助手：  by 蓝师傅"
         />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="自定义截图高度"/>
+
+    <EditText
+        android:inputType="number"
+        android:id="@+id/editText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1000"/>
+
+    <Button
+        android:id="@+id/btn_save"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="保存"/>
+
     <Button
         android:id="@+id/btn_screen"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="获取截屏照片"/>
+        android:text="测试"/>
+
     <ImageView
         android:id="@+id/iv_screen"
         android:layout_width="wrap_content"

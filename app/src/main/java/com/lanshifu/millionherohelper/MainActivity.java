@@ -13,14 +13,18 @@ import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.lanshifu.baselibrary.base.BaseActivity;
 import com.lanshifu.baselibrary.utils.StorageUtil;
 import com.lanshifu.baselibrary.utils.SystemUtil;
+import com.lanshifu.baselibrary.utils.ToastUtil;
 import com.lanshifu.millionherohelper.mvp.presenter.MainPresenter;
 import com.lanshifu.millionherohelper.mvp.view.MainView;
 import com.yhao.floatwindow.FloatWindow;
@@ -43,6 +47,12 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     private static final int REQUEST_MEDIA_PROJECTION = 10;
     @Bind(R.id.iv_screen)
     ImageView mIvScreen;
+    @Bind(R.id.editText)
+    EditText mEditText;
+    @Bind(R.id.btn_screen)
+    Button mBtnScreen;
+    @Bind(R.id.btn_save)
+    Button mBtnSave;
 
     private TextView mTv_result;
     private MediaProjectionManager mMediaProjectionManager;
@@ -91,8 +101,8 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
         FloatWindow
                 .with(MainApplication.getContext())
                 .setView(view)
-                .setX(100)                       //100px
-                .setY(Screen.height, 0.3f)        //屏幕高度的 30%
+                .setX(Screen.width, 0.6f)                       //100px
+                .setY(Screen.height, 0.6f)        //屏幕高度的 60%
                 .setDesktopShow(true)
                 .setMoveType(MoveType.slide)
                 .build();
@@ -135,13 +145,19 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     }
 
 
-    @OnClick(R.id.btn_screen)
-    public void onViewClicked() {
-        startCapture();
-
-        String oldImagePath = StorageUtil.getAppRootDir() +"save.png";
+    private void showDialog() {
+        String oldImagePath = StorageUtil.getAppRootDir() + "save.png";
         Bitmap bitmap = BitmapFactory.decodeFile(oldImagePath);
-        mIvScreen.setImageBitmap(bitmap);
+        if (bitmap == null) {
+            ToastUtil.showLongToast("请先点击搜索答案生成截图");
+            return;
+        }
+        ImageView imageVeiw = new ImageView(this);
+        imageVeiw.setImageBitmap(bitmap);
+
+        new AlertDialog.Builder(this)
+                .setView(imageVeiw)
+                .show();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -210,4 +226,20 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
         }
     }
 
+
+
+    @OnClick({R.id.btn_save, R.id.btn_screen})
+    public void onViewClicked(View view) {
+        switch (view.getId()) {
+            case R.id.btn_save:
+                String height = mEditText.getText().toString();
+                ToastUtil.showShortToast("功能没实现");
+
+                break;
+            case R.id.btn_screen:
+                showDialog();
+                break;
+        }
+    }
 }
+
