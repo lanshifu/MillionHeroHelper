@@ -2,6 +2,7 @@ package com.lanshifu.millionherohelper.mvp.presenter;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.text.Html;
 
 import com.baidu.ocr.sdk.OCR;
 import com.baidu.ocr.sdk.OnResultListener;
@@ -60,8 +61,8 @@ public class MainPresenter extends BasePresenter<MainView> {
                     @Override
                     public void _onNext(Boolean root) {
                         mView.hasRootPermission(root);
+                        initBaiduOrc();
                         if (root) {
-                            initBaiduOrc();
                         } else {
                             ToastUtil.showShortToast("手机没有root权限，无法使用部分功能");
                         }
@@ -74,17 +75,19 @@ public class MainPresenter extends BasePresenter<MainView> {
                 });
     }
 
-    private void initBaiduOrc() {
+    public void initBaiduOrc() {
         OCR.getInstance().initAccessTokenWithAkSk(new OnResultListener<AccessToken>() {
             @Override
             public void onResult(AccessToken result) {
                 // 调用成功，返回AccessToken对象
                 String token = result.getAccessToken();
+                LogHelper.d("lxb ->" +result.getAccessToken());
             }
 
             @Override
             public void onError(OCRError error) {
                 // 调用失败，返回OCRError子类SDKError对象
+                LogHelper.e("lxb ->"+error.getMessage());
             }
         }, MainApplication.getContext(), "DZYaZQ9esTBGtOnXR4mCccU4", "9G1qzWVLLuG5xxSPZgP3sPx4KchK2g1i");
     }
@@ -130,6 +133,36 @@ public class MainPresenter extends BasePresenter<MainView> {
                 });
     }
 
+
+    public void compress(final String oldImagePath, final String savaPath){
+        LogHelper.d("截图时间: " + (System.currentTimeMillis() - starTime));
+        Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(@NonNull ObservableEmitter<String> e) throws Exception {
+                Bitmap bitmap = BitmapFactory.decodeFile(oldImagePath);
+                cropBitmap(bitmap, savaPath);
+                e.onNext(savaPath);
+            }
+        }).compose(RxScheduler.<String>io_main())
+                .subscribe(new MyObserver<String>() {
+                    @Override
+                    public void _onNext(String s) {
+                        mPicturePath = s;
+                        LogHelper.d(s);
+                        long screenTime = System.currentTimeMillis() - starTime;
+                        LogHelper.d("截图加裁剪时间: " + screenTime);
+                        picToText();
+                    }
+
+                    @Override
+                    public void _onError(String e) {
+                        LogHelper.e(e);
+                    }
+                });
+    }
+
+
+
     private void picToText() {
         // 通用文字识别参数设置
         GeneralBasicParams param = new GeneralBasicParams();
@@ -144,7 +177,7 @@ public class MainPresenter extends BasePresenter<MainView> {
             public void onResult(GeneralResult result) {
                 // 调用成功，返回GeneralResult对象
                 long picToTextTime = System.currentTimeMillis();
-                LogHelper.d("图片转文字总时间: " + (picToTextTime - starTime));
+                LogHelper.d("总时间: " + (picToTextTime - starTime));
                 String[] words = new String[result.getWordList().size()];
                 for (int i = 0; i < result.getWordList().size(); i++) {
                     WordSimple word = result.getWordList().get(i);
@@ -179,13 +212,14 @@ public class MainPresenter extends BasePresenter<MainView> {
             @Override
             public void onError(OCRError error) {
                 // 调用失败，返回OCRError对象
-                LogHelper.e("识别识别 " + error);
+                LogHelper.e("识别失败 " + error);
+                mView.heroError(error.getMessage());
             }
         });
     }
 
 
-    private void baidu(String text) {
+    private void baidu(final String text) {
         RetrofitHelper.getInstance().getDefaultApi().get(text)
                 .compose(RxScheduler.<ResponseBody>io_main())
                 .subscribe(new MyObserver<ResponseBody>() {
@@ -196,7 +230,6 @@ public class MainPresenter extends BasePresenter<MainView> {
                         LogHelper.d("得出结果总时间 " + (System.currentTimeMillis() - starTime));
                         try {
                             String string = responseBody.string();
-                            LogHelper.d("网页结果 " + string);
                             for (Map.Entry<String, Integer> stringIntegerEntry : mAnswers.entrySet()) {
                                 String key = stringIntegerEntry.getKey().replace("《", "").replace("》", "");
                                 mCounter = 0;
@@ -205,13 +238,11 @@ public class MainPresenter extends BasePresenter<MainView> {
                                 result.append("\n");
                                 LogHelper.d(key + " :" + count);
                             }
-
                             mView.heroResult(result.toString(), System.currentTimeMillis() - starTime);
 
                         } catch (IOException e) {
                             mView.heroError(e.getMessage());
                         }
-
 
                     }
 
@@ -241,4 +272,9 @@ public class MainPresenter extends BasePresenter<MainView> {
             return mCounter;
         }
     }
+
+public void setStartTime(long starTime){
+    this.starTime = starTime;
+}
+
 }
