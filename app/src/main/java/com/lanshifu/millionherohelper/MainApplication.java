@@ -5,6 +5,8 @@ import android.util.Log;
 
 import com.lanshifu.baselibrary.BaseApplication;
 
+import org.litepal.LitePal;
+
 /**
  * Created by lanxiaobin on 2018/1/4.
  */
@@ -23,5 +25,6 @@ public class MainApplication extends BaseApplication {
         super.attachBaseContext(base);
         long start = System.currentTimeMillis();
         Log.d(TAG, "attachBaseContext: use time:" + (System.currentTimeMillis() - start));
+        LitePal.initialize(base);
     }
 }

@@ -1,42 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <TextView
-        android:padding="16dp"
-        android:layout_gravity="center"
-        android:layout_width="wrap_content"
+        android:id="@+id/tv_select"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="答题助手：  by 蓝师傅"
-        />
+        android:paddingBottom="@dimen/dp_8"
+        android:paddingTop="@dimen/dp_8"
+        android:text="点击这里选择模式"/>
+
     <TextView
+        android:id="@+id/tv_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="@dimen/dp_16"
+        android:text="百万英雄"
+        android:textColor="@color/red"
+        android:textSize="20sp"/>
+
+    <TextView
+        android:id="@+id/tv_changeParam"
+        android:paddingTop="@dimen/dp_8"
+        android:paddingBottom="@dimen/dp_8"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="自定义截图高度"/>
+        android:text="点击修改参数(y是起点y坐标 和 height是高度)"/>
 
-    <EditText
-        android:inputType="number"
-        android:id="@+id/editText"
-        android:layout_width="match_parent"
+    <TextView
+        android:id="@+id/tv_xy"
+        android:textColor="@color/red"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="1000"/>
+        android:text="x:10    y:20     width:100     height:500"/>
 
     <Button
-        android:id="@+id/btn_save"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="保存"/>
-
-    <Button
+        android:layout_marginTop="40dp"
         android:id="@+id/btn_screen"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="测试"/>
+        android:text="测试截图"/>
 
     <ImageView
         android:id="@+id/iv_screen"

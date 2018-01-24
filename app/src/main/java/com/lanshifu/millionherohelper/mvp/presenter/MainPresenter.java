@@ -2,7 +2,6 @@ package com.lanshifu.millionherohelper.mvp.presenter;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.text.Html;
 
 import com.baidu.ocr.sdk.OCR;
 import com.baidu.ocr.sdk.OnResultListener;
@@ -11,22 +10,25 @@ import com.baidu.ocr.sdk.model.AccessToken;
 import com.baidu.ocr.sdk.model.GeneralBasicParams;
 import com.baidu.ocr.sdk.model.GeneralResult;
 import com.baidu.ocr.sdk.model.WordSimple;
-import com.jaredrummler.android.shell.CommandResult;
 import com.jaredrummler.android.shell.Shell;
 import com.lanshifu.baselibrary.basemvp.BasePresenter;
 import com.lanshifu.baselibrary.log.LogHelper;
 import com.lanshifu.baselibrary.network.RxScheduler;
 import com.lanshifu.baselibrary.utils.FileUtil;
-import com.lanshifu.baselibrary.utils.StorageUtil;
 import com.lanshifu.baselibrary.utils.ToastUtil;
 import com.lanshifu.millionherohelper.MainApplication;
+import com.lanshifu.millionherohelper.SPUtil;
+import com.lanshifu.millionherohelper.bean.ModeDB;
 import com.lanshifu.millionherohelper.mvp.view.MainView;
 import com.lanshifu.millionherohelper.network.MyObserver;
 import com.lanshifu.millionherohelper.network.RetrofitHelper;
 
+import org.litepal.crud.DataSupport;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.reactivex.Observable;
@@ -48,6 +50,9 @@ public class MainPresenter extends BasePresenter<MainView> {
     private long starTime = 0;
 
     private int mCounter = 0;
+    private final static int MODE_MILLION = 0;
+    private final static int MODE_HUANGJINWU = 1;
+    private int mCurrentMode = 0;
 
 
     public void checkRootPermission() {
@@ -81,13 +86,13 @@ public class MainPresenter extends BasePresenter<MainView> {
             public void onResult(AccessToken result) {
                 // 调用成功，返回AccessToken对象
                 String token = result.getAccessToken();
-                LogHelper.d("lxb ->" +result.getAccessToken());
+                LogHelper.d("lxb ->" + result.getAccessToken());
             }
 
             @Override
             public void onError(OCRError error) {
                 // 调用失败，返回OCRError子类SDKError对象
-                LogHelper.e("lxb ->"+error.getMessage());
+                LogHelper.e("lxb ->" + error.getMessage());
             }
         }, MainApplication.getContext(), "DZYaZQ9esTBGtOnXR4mCccU4", "9G1qzWVLLuG5xxSPZgP3sPx4KchK2g1i");
     }
@@ -96,45 +101,33 @@ public class MainPresenter extends BasePresenter<MainView> {
     public void cropBitmap(Bitmap bitmap, String savePath) {
         int w = bitmap.getWidth(); // 得到图片的宽，高
         int h = bitmap.getHeight();
-        Bitmap bm = Bitmap.createBitmap(bitmap, 70, 285, w - 70, 1000, null, false);
+
+        mCurrentMode = SPUtil.getInstance().getInt(SPUtil.KEY_MODE);
+        int x, y, width, height;
+        if (mCurrentMode == MODE_MILLION) {
+            x = 70;
+            y = 285;
+            width = w - 120;
+            height = 1000;
+        } else if (mCurrentMode == MODE_HUANGJINWU) {
+            x = 70;
+            y = 1050;
+            width = w - 100;
+            height = 600;
+        } else {
+            x = 70;
+            y = h / 2;
+            width = w - 70;
+            height = 1000;
+        }
+
+
+        Bitmap bm = Bitmap.createBitmap(bitmap, x, y, width, height, null, false);
         FileUtil.saveBitmap(bm, savePath);
     }
 
 
-    public void getScreenAndParseText() {
-        starTime = System.currentTimeMillis();
-        Observable.create(new ObservableOnSubscribe<CommandResult>() {
-            @Override
-            public void subscribe(@NonNull ObservableEmitter<CommandResult> e) throws Exception {
-                String commands = "screencap -p " + mTempPicPath;
-                CommandResult commandResult = Shell.SU.run(commands);
-                mTempPicPath = StorageUtil.getAppRootDir() + "millionTemp.png";
-                mPicturePath = StorageUtil.getAppRootDir() + "million.png";
-                //裁剪
-                Bitmap bitmap = BitmapFactory.decodeFile(mTempPicPath);
-                cropBitmap(bitmap, mPicturePath);
-                e.onNext(commandResult);
-            }
-        })
-                .compose(RxScheduler.<CommandResult>io_main())
-                .subscribe(new MyObserver<CommandResult>() {
-                    @Override
-                    public void _onNext(CommandResult s) {
-                        LogHelper.d(s.getStdout());
-                        long screenTime = System.currentTimeMillis() - starTime;
-                        LogHelper.d("截屏加裁剪时间: " + screenTime);
-                        picToText();
-                    }
-
-                    @Override
-                    public void _onError(String e) {
-                        LogHelper.e(e);
-                    }
-                });
-    }
-
-
-    public void compress(final String oldImagePath, final String savaPath){
+    public void compress(final String oldImagePath, final String savaPath) {
         LogHelper.d("截图时间: " + (System.currentTimeMillis() - starTime));
         Observable.create(new ObservableOnSubscribe<String>() {
             @Override
@@ -160,7 +153,6 @@ public class MainPresenter extends BasePresenter<MainView> {
                     }
                 });
     }
-
 
 
     private void picToText() {
@@ -195,7 +187,6 @@ public class MainPresenter extends BasePresenter<MainView> {
                         break;
                     }
                 }
-
                 int index = question.indexOf(".");
                 if (index != -1) {
                     question = question.substring(index);
@@ -203,8 +194,13 @@ public class MainPresenter extends BasePresenter<MainView> {
                 LogHelper.d("问题 " + question);
                 mAnswers = new HashMap<String, Integer>();
                 for (int i = start; i < words.length; i++) {
-                    LogHelper.d("选项" + i + 1 + ":" + words[i]);
-                    mAnswers.put(words[i], 0);
+                    String item = words[i];
+                    if (mCurrentMode == MODE_HUANGJINWU &&
+                            (item.startsWith("A.") || item.startsWith("B.") || item.startsWith("C."))) {
+                        item = item.substring(2);
+                    }
+                    LogHelper.d("选项" + i + 1 + ":" + item);
+                    mAnswers.put(item, 0);
                 }
                 baidu(question);
             }
@@ -273,8 +269,19 @@ public class MainPresenter extends BasePresenter<MainView> {
         }
     }
 
-public void setStartTime(long starTime){
-    this.starTime = starTime;
-}
+    public void setStartTime(long starTime) {
+        this.starTime = starTime;
+    }
+
+
+
+
+    public void initDatabase(){
+        List<ModeDB> all = DataSupport.findAll(ModeDB.class);
+        if (all.size() == 0){
+
+        }
+    }
+
 
 }

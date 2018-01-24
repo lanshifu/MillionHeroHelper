@@ -1,6 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        debug {
+            keyAlias 'key0'
+            keyPassword '123456'
+            storeFile file('E:/android_project/201801/MillionHeroHelper_2/key.jks')
+            storePassword '123456'
+        }
+    }
     compileSdkVersion 26
     buildToolsVersion "26.0.2"
     defaultConfig {
@@ -30,4 +38,6 @@ dependencies {
     //悬浮窗 https://github.com/yhaolpz/FloatWindow
     compile 'com.github.yhaolpz:FloatWindow:1.0.8'
     compile files('src/main/lib/ocr-sdk.jar')
+    //    //数据库
+    compile 'org.litepal.android:core:1.6.0'
 }

@@ -1,6 +1,7 @@
 package com.lanshifu.millionherohelper;
 
 import android.annotation.TargetApi;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -15,13 +16,14 @@ import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.lanshifu.baselibrary.base.BaseActivity;
+import com.lanshifu.baselibrary.log.LogHelper;
 import com.lanshifu.baselibrary.utils.StorageUtil;
 import com.lanshifu.baselibrary.utils.SystemUtil;
 import com.lanshifu.baselibrary.utils.ToastUtil;
@@ -47,18 +49,25 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     private static final int REQUEST_MEDIA_PROJECTION = 10;
     @Bind(R.id.iv_screen)
     ImageView mIvScreen;
-    @Bind(R.id.editText)
-    EditText mEditText;
     @Bind(R.id.btn_screen)
     Button mBtnScreen;
-    @Bind(R.id.btn_save)
-    Button mBtnSave;
+    @Bind(R.id.tv_select)
+    TextView mTvSelect;
+    @Bind(R.id.tv_mode)
+    TextView mTvMode;
+    @Bind(R.id.tv_changeParam)
+    TextView mTvChangeParam;
+    @Bind(R.id.tv_xy)
+    TextView mTvXy;
 
     private TextView mTv_result;
     private MediaProjectionManager mMediaProjectionManager;
     private MediaProjection mMediaProjection;
     private VirtualDisplay mVirtualDisplay;
     private ImageReader mImageReader;
+    private int mScreenWidth;
+    private int mScreenHeight;
+    String[] items = {"百万英雄", "百万黄金屋"};
 
     @Override
     protected int getLayoutId() {
@@ -71,19 +80,55 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
         mPresenter.setView(this);
     }
 
+
     @Override
     protected void initView() {
         setTitleText("答题辅助");
         hideBackIcon();
 
+        mScreenWidth = getWindowManager().getDefaultDisplay().getWidth();
+        mScreenHeight = getWindowManager().getDefaultDisplay().getHeight();
+        LogHelper.d("width:" + mScreenWidth + ",heitht: " + mScreenHeight);
+        mTvMode.setText(items[SPUtil.getInstance().getInt(SPUtil.KEY_MODE)]);
         openFlow();
         mPresenter.initBaiduOrc();
 
         mMediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
-        startActivityForResult(
-                mMediaProjectionManager.createScreenCaptureIntent(),
-                REQUEST_MEDIA_PROJECTION);
-        mImageReader = ImageReader.newInstance(SystemUtil.getScreenWidth(this), 2000, 0x1, 2);
+        startActivityForResult(mMediaProjectionManager.createScreenCaptureIntent(), REQUEST_MEDIA_PROJECTION);
+        mImageReader = ImageReader.newInstance(mScreenWidth, mScreenHeight, 0x1, 2);
+
+
+    }
+
+
+    @Override
+    protected int getTBMenusId() {
+        return R.menu.menu_main;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.about) {
+            showAboutMeDialog();
+        }
+        if (item.getItemId() == R.id.add) {
+            showShortToast("添加项目");
+        }
+        if (item.getItemId() == R.id.help) {
+            showShortToast("help");
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showAboutMeDialog() {
+        showInfoDialog("关于作者", "蓝师傅，qq：*********");
+    }
+
+    private void showInfoDialog(String title, String message) {
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .show();
     }
 
     private void openFlow() {
@@ -227,19 +272,36 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     }
 
 
-
-    @OnClick({R.id.btn_save, R.id.btn_screen})
+    @OnClick({R.id.btn_screen, R.id.tv_select, R.id.tv_mode, R.id.tv_changeParam})
     public void onViewClicked(View view) {
         switch (view.getId()) {
-            case R.id.btn_save:
-                String height = mEditText.getText().toString();
-                ToastUtil.showShortToast("功能没实现");
-
-                break;
             case R.id.btn_screen:
                 showDialog();
                 break;
+
+            case R.id.tv_select:
+            case R.id.tv_mode:
+                showSelectModeDialog();
+                break;
+
+            case R.id.tv_changeParam:
+//                showSelectModeDialog();
+                break;
         }
     }
+
+    private void showSelectModeDialog() {
+        new AlertDialog.Builder(this)
+                .setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        SPUtil.getInstance().putInt(SPUtil.KEY_MODE, which);
+                        mTvMode.setText(items[which]);
+                        showShortToast("已切换模式为：" + items[which]);
+                        dialog.dismiss();
+                    }
+                }).show();
+    }
+
 }
 

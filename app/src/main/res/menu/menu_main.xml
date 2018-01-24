@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <item
+        android:id="@+id/add"
+        android:title="添加项目"
+        app:showAsAction="always"/>
+    <item
+        android:id="@+id/help"
+        android:title="教程"
+       app:showAsAction="never"/>
+    <item
+        android:id="@+id/about"
+        android:title="关于我"
+        app:showAsAction="never"/>
+
+
+</menu>
