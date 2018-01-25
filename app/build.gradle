@@ -5,7 +5,7 @@ android {
         debug {
             keyAlias 'key0'
             keyPassword '123456'
-            storeFile file('E:/android_project/201801/MillionHeroHelper_2/key.jks')
+            storeFile file('D:/git_clone/201801/BiuBike/MillionHeroHelper/key.jks')
             storePassword '123456'
         }
     }

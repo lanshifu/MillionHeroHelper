@@ -5,7 +5,7 @@
 
     <item
         android:id="@+id/add"
-        android:title="添加项目"
+        android:title="添加模式"
         app:showAsAction="always"/>
     <item
         android:id="@+id/help"
@@ -13,7 +13,7 @@
        app:showAsAction="never"/>
     <item
         android:id="@+id/about"
-        android:title="关于我"
+        android:title="关于"
         app:showAsAction="never"/>
 
 

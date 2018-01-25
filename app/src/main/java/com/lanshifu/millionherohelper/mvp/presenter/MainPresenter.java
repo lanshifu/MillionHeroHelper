@@ -53,6 +53,8 @@ public class MainPresenter extends BasePresenter<MainView> {
     private final static int MODE_MILLION = 0;
     private final static int MODE_HUANGJINWU = 1;
     private int mCurrentMode = 0;
+    private List<ModeDB> mModeDBList;
+    private ModeDB mCurrentModeDB;
 
 
     public void checkRootPermission() {
@@ -99,28 +101,43 @@ public class MainPresenter extends BasePresenter<MainView> {
 
 
     public void cropBitmap(Bitmap bitmap, String savePath) {
-        int w = bitmap.getWidth(); // 得到图片的宽，高
-        int h = bitmap.getHeight();
-
-        mCurrentMode = SPUtil.getInstance().getInt(SPUtil.KEY_MODE);
-        int x, y, width, height;
-        if (mCurrentMode == MODE_MILLION) {
-            x = 70;
-            y = 285;
-            width = w - 120;
-            height = 1000;
-        } else if (mCurrentMode == MODE_HUANGJINWU) {
-            x = 70;
-            y = 1050;
-            width = w - 100;
-            height = 600;
-        } else {
-            x = 70;
-            y = h / 2;
-            width = w - 70;
-            height = 1000;
+        if (mCurrentModeDB == null) {
+            ToastUtil.showShortToast("获取不到当前模式");
+            return;
         }
 
+//        int w = bitmap.getWidth(); // 得到图片的宽，高
+//        int h = bitmap.getHeight();
+
+        int x, y, width, height;
+//        mCurrentMode = SPUtil.getInstance().getInt(SPUtil.KEY_MODE);
+//        if (mCurrentMode == MODE_MILLION) {
+//            x = 70;
+//            y = 285;
+//            width = 960;
+//            height = 1000;
+//            ModeDB db = new ModeDB("百万英雄",0,70,285,960,1000);
+//        } else if (mCurrentMode == MODE_HUANGJINWU) {
+//            x = 70;
+//            y = 1050;
+//            width = 960;
+//            height = 600;
+//        } else {
+//            x = 70;
+//            y = h / 2;
+//            width = w - 70;
+//            height = 1000;
+//        }
+
+        x = mCurrentModeDB.getX();
+        y = mCurrentModeDB.getY();
+        width = mCurrentModeDB.getWidth();
+        height = mCurrentModeDB.getHeight();
+
+        LogHelper.d("lxb ->x" +x);
+        LogHelper.d("lxb ->y" +y);
+        LogHelper.d("lxb ->width" +width);
+        LogHelper.d("lxb ->height" +height);
 
         Bitmap bm = Bitmap.createBitmap(bitmap, x, y, width, height, null, false);
         FileUtil.saveBitmap(bm, savePath);
@@ -195,8 +212,7 @@ public class MainPresenter extends BasePresenter<MainView> {
                 mAnswers = new HashMap<String, Integer>();
                 for (int i = start; i < words.length; i++) {
                     String item = words[i];
-                    if (mCurrentMode == MODE_HUANGJINWU &&
-                            (item.startsWith("A.") || item.startsWith("B.") || item.startsWith("C."))) {
+                    if (item.startsWith("A.") || item.startsWith("B.") || item.startsWith("C.")) {
                         item = item.substring(2);
                     }
                     LogHelper.d("选项" + i + 1 + ":" + item);
@@ -275,12 +291,18 @@ public class MainPresenter extends BasePresenter<MainView> {
 
 
 
+    public void setCurrentModeDB(ModeDB modeDB){
+        this.mCurrentModeDB = modeDB;
+    }
 
     public void initDatabase(){
-        List<ModeDB> all = DataSupport.findAll(ModeDB.class);
-        if (all.size() == 0){
-
+        mModeDBList = DataSupport.findAll(ModeDB.class);
+        if (mModeDBList.size() == 0){
+            new ModeDB("百万英雄",70,285,960,1000).save();
+            new ModeDB("百万黄金屋",70,1050,960,600).save();
+            mModeDBList = DataSupport.findAll(ModeDB.class);
         }
+        mView.updateDBSuccess(mModeDBList);
     }
 
 

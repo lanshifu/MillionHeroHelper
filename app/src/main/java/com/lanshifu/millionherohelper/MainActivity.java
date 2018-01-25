@@ -12,13 +12,13 @@ import android.media.ImageReader;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -27,19 +27,22 @@ import com.lanshifu.baselibrary.log.LogHelper;
 import com.lanshifu.baselibrary.utils.StorageUtil;
 import com.lanshifu.baselibrary.utils.SystemUtil;
 import com.lanshifu.baselibrary.utils.ToastUtil;
+import com.lanshifu.millionherohelper.bean.ModeDB;
 import com.lanshifu.millionherohelper.mvp.presenter.MainPresenter;
 import com.lanshifu.millionherohelper.mvp.view.MainView;
 import com.yhao.floatwindow.FloatWindow;
 import com.yhao.floatwindow.MoveType;
 import com.yhao.floatwindow.Screen;
 
+import org.litepal.crud.DataSupport;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
 import butterknife.Bind;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class MainActivity extends BaseActivity<MainPresenter> implements MainView {
@@ -55,10 +58,6 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     TextView mTvSelect;
     @Bind(R.id.tv_mode)
     TextView mTvMode;
-    @Bind(R.id.tv_changeParam)
-    TextView mTvChangeParam;
-    @Bind(R.id.tv_xy)
-    TextView mTvXy;
 
     private TextView mTv_result;
     private MediaProjectionManager mMediaProjectionManager;
@@ -67,7 +66,9 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     private ImageReader mImageReader;
     private int mScreenWidth;
     private int mScreenHeight;
+    List<ModeDB> modeDBList;
     String[] items = {"百万英雄", "百万黄金屋"};
+    private ModeDB mCurrentModeDB;
 
     @Override
     protected int getLayoutId() {
@@ -89,7 +90,7 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
         mScreenWidth = getWindowManager().getDefaultDisplay().getWidth();
         mScreenHeight = getWindowManager().getDefaultDisplay().getHeight();
         LogHelper.d("width:" + mScreenWidth + ",heitht: " + mScreenHeight);
-        mTvMode.setText(items[SPUtil.getInstance().getInt(SPUtil.KEY_MODE)]);
+
         openFlow();
         mPresenter.initBaiduOrc();
 
@@ -97,7 +98,20 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
         startActivityForResult(mMediaProjectionManager.createScreenCaptureIntent(), REQUEST_MEDIA_PROJECTION);
         mImageReader = ImageReader.newInstance(mScreenWidth, mScreenHeight, 0x1, 2);
 
+        mPresenter.initDatabase();
 
+        int id = SPUtil.getInstance().getInt(SPUtil.KEY_MODE);
+        mCurrentModeDB = DataSupport.find(ModeDB.class, id);
+        updateView();
+    }
+
+    private void updateView() {
+        if(mCurrentModeDB != null){
+            mTvMode.setText(mCurrentModeDB.getName());
+            mPresenter.setCurrentModeDB(mCurrentModeDB);
+        }else {
+            mTvMode.setText("请选择模式");
+        }
     }
 
 
@@ -112,16 +126,16 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
             showAboutMeDialog();
         }
         if (item.getItemId() == R.id.add) {
-            showShortToast("添加项目");
+            showAddOrUpdateModeDialog(false,"添加项目");
         }
         if (item.getItemId() == R.id.help) {
-            showShortToast("help");
+            showInfoDialog("使用说明", "选择模式，然后把悬浮窗拉到答题区域外，点击搜索答案即可");
         }
         return super.onOptionsItemSelected(item);
     }
 
     private void showAboutMeDialog() {
-        showInfoDialog("关于作者", "蓝师傅，qq：*********");
+        showInfoDialog("关于作者", "蓝师傅 404985095\r");
     }
 
     private void showInfoDialog(String title, String message) {
@@ -171,6 +185,11 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     @Override
     public void heroError(String text) {
         mTv_result.setText("出错了：" + text);
+    }
+
+    @Override
+    public void updateDBSuccess(List<ModeDB> modeDBList) {
+        this.modeDBList = modeDBList;
     }
 
     @Override
@@ -272,7 +291,7 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
     }
 
 
-    @OnClick({R.id.btn_screen, R.id.tv_select, R.id.tv_mode, R.id.tv_changeParam})
+    @OnClick({R.id.btn_screen, R.id.tv_select, R.id.tv_mode, R.id.btn_change_param})
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.btn_screen:
@@ -284,23 +303,80 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
                 showSelectModeDialog();
                 break;
 
-            case R.id.tv_changeParam:
-//                showSelectModeDialog();
+            case R.id.btn_change_param:
+                showAddOrUpdateModeDialog(true,"更新参数");
                 break;
         }
     }
 
     private void showSelectModeDialog() {
+        items = new String[modeDBList.size()];
+        for (int i = 0; i < modeDBList.size(); i++) {
+            ModeDB modeDB = modeDBList.get(i);
+            items[i] = modeDB.getName();
+        }
         new AlertDialog.Builder(this)
                 .setSingleChoiceItems(items, -1, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        SPUtil.getInstance().putInt(SPUtil.KEY_MODE, which);
-                        mTvMode.setText(items[which]);
+                        mCurrentModeDB = modeDBList.get(which);
+                        SPUtil.getInstance().putInt(SPUtil.KEY_MODE, mCurrentModeDB.getId());
+                        updateView();
                         showShortToast("已切换模式为：" + items[which]);
+                        mPresenter.setCurrentModeDB(mCurrentModeDB);
                         dialog.dismiss();
                     }
                 }).show();
+    }
+
+
+    private void showAddOrUpdateModeDialog(final boolean update, String title) {
+        View view = View.inflate(this,R.layout.layout_add_mode,null);
+        final EditText et_name = view.findViewById(R.id.et_name);
+        final EditText et_x = view.findViewById(R.id.et_x);
+        final EditText et_y = view.findViewById(R.id.et_y);
+        final EditText et_width = view.findViewById(R.id.et_width);
+        final EditText et_heitht = view.findViewById(R.id.et_heitht);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        if(mCurrentModeDB != null){
+            et_x.setText(mCurrentModeDB.getX() +"");
+            et_y.setText(mCurrentModeDB.getY() +"");
+            et_width.setText(mCurrentModeDB.getWidth() +"");
+            et_heitht.setText(mCurrentModeDB.getHeight() +"");
+        }
+        if (update){
+            et_name.setText(mCurrentModeDB.getName());
+        }
+        builder.setTitle(title);
+
+        builder.setView(view);
+        builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (update){
+                            mCurrentModeDB.setName(et_name.getText().toString());
+                            mCurrentModeDB.setX(Integer.parseInt(et_x.getText().toString()));
+                            mCurrentModeDB.setY(Integer.parseInt(et_y.getText().toString()));
+                            mCurrentModeDB.setWidth(Integer.parseInt(et_width.getText().toString()));
+                            mCurrentModeDB.setHeight(Integer.parseInt(et_heitht.getText().toString()));
+                            boolean save = mCurrentModeDB.save();
+                            updateView();
+                            showShortToast("更新 "+ (save ? "成功": "失败"));
+                        }else {
+                            ModeDB modeDB = new ModeDB(et_name.getText().toString(),
+                                    Integer.parseInt(et_x.getText().toString()),
+                                    Integer.parseInt(et_y.getText().toString()),
+                                    Integer.parseInt(et_width.getText().toString()),
+                                    Integer.parseInt(et_heitht.getText().toString()));
+                            boolean save = modeDB.save();
+                            showShortToast("添加项目 "+ (save ? "成功": "失败"));
+                        }
+                        mPresenter.initDatabase();
+                        dialog.dismiss();
+                    }
+                });
+        builder.show();
+
     }
 
 }
