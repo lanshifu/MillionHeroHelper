@@ -22,6 +22,17 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.lanshifu.baselibrary.crash.DefaultErrorActivity"
+            android:process=":crash_activity" />
+
+        <provider
+            android:name="com.lanshifu.baselibrary.crash.CaocInitProvider"
+            android:authorities="com.lanshifu.millionherohelper.customactivityoncrashinitprovider"
+            android:exported="false"
+            android:initOrder="101" />
+
     </application>
 
 </manifest>

@@ -260,9 +260,10 @@ public class MainActivity extends BaseActivity<MainPresenter> implements MainVie
                 Log.e(TAG, "file save success ");
 //                Toast.makeText(this.getApplicationContext(), "截图成功", Toast.LENGTH_SHORT).show();
                 mPresenter.compress(mImagePath + mImageName, mImagePath + "save.png");
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.e(TAG, e.toString());
                 e.printStackTrace();
+                showLongToast("图片裁剪失败："+e.getMessage());
             }
         }
     }

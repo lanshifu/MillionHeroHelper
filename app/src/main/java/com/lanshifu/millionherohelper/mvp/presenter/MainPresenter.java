@@ -106,28 +106,7 @@ public class MainPresenter extends BasePresenter<MainView> {
             return;
         }
 
-//        int w = bitmap.getWidth(); // 得到图片的宽，高
-//        int h = bitmap.getHeight();
-
         int x, y, width, height;
-//        mCurrentMode = SPUtil.getInstance().getInt(SPUtil.KEY_MODE);
-//        if (mCurrentMode == MODE_MILLION) {
-//            x = 70;
-//            y = 285;
-//            width = 960;
-//            height = 1000;
-//            ModeDB db = new ModeDB("百万英雄",0,70,285,960,1000);
-//        } else if (mCurrentMode == MODE_HUANGJINWU) {
-//            x = 70;
-//            y = 1050;
-//            width = 960;
-//            height = 600;
-//        } else {
-//            x = 70;
-//            y = h / 2;
-//            width = w - 70;
-//            height = 1000;
-//        }
 
         x = mCurrentModeDB.getX();
         y = mCurrentModeDB.getY();
@@ -167,6 +146,7 @@ public class MainPresenter extends BasePresenter<MainView> {
                     @Override
                     public void _onError(String e) {
                         LogHelper.e(e);
+                        ToastUtil.showLongToast(e);
                     }
                 });
     }

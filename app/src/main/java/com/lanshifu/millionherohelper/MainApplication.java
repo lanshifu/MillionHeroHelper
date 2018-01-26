@@ -4,6 +4,8 @@ import android.content.Context;
 import android.util.Log;
 
 import com.lanshifu.baselibrary.BaseApplication;
+import com.lanshifu.baselibrary.log.LogHandler;
+import com.lanshifu.baselibrary.log.LogHelper;
 
 import org.litepal.LitePal;
 
